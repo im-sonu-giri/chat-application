@@ -44,9 +44,14 @@ INSTALLED_APPS = [
     'chatapp',
     'corsheaders',
     'channels',
+    'rest_framework', 
+    'rest_framework',
+    
+    
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -75,6 +80,16 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'chatsystem.wsgi.application'
+ASGI_APPLICATION = 'chatsystem.asgi.application'
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)], 
+        },
+    },
+}
 
 
 # Database
@@ -110,6 +125,20 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
+CORS_ALLOW_ALL_ORIGINS = True
+
 
 
 # Internationalization
