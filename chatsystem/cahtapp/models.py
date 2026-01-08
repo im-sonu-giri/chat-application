@@ -10,3 +10,10 @@ class ConversationManger(models.Manager):
 
 
 
+class Conversation(models.Model):
+    participants =  models.ManyToManyField(User, related_name='conversations')
+    objects = ConversationManger()
+    
+    def __str__(self):
+        participant_names = " ,".join([user.username for user in self.participants.all()])
+        return f"conversation with {participant_names}"
