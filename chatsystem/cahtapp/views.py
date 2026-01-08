@@ -62,3 +62,62 @@ class ConversationListCreateView(generics.ListCreateAPIView):
             )
         conversation = Conversation.objects.create()
         conversation.participants.set(users)
+        
+        serializer = self.get_serializer(conversation)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+#Logic: 
+
+# GET list of conversations where current user is a participant
+
+# WHEN create request is received:
+
+#     Extract "participants" from request data
+#     If participants count is NOT equal to 2:
+#         RETURN error "Conversation needs exactly two participants"
+
+#     If current user ID is NOT in participants list:
+#         RETURN error "You are not a participant of this conversation"
+
+#     Fetch users from database whose IDs are in participants list
+
+#     If number of fetched users is NOT equal to 2:
+#         RETURN error "Conversation needs two valid users"
+
+#     Check if a conversation already exists such that:
+#         - participant 1 exists in the conversation
+#         - participant 2 exists in the conversation
+
+#     If such conversation exists:
+#         RETURN error "Conversation already exists"
+
+#     Create a new empty conversation
+
+#     Add both users as participants of the conversation
+
+#     RETURN success response
+
+
+class MessageListCreateView(generics.ListCreateAPIView):
+    permission_classes = [IsAuthenticated]
+    def get_queryset(self):
+        conversation_id = self.kwargs['conversation_id']
+        conversation = self.get_conversation(conversation_id)
+        
+        return conversation.messages.order_by('timestamp')
+    
+    def get_conversation(self):
+        if self.request.method == 'POST':
+            return CreateMessageSerializer
+        return MessageSerializer
+    def perform_create(self, serializer):
+        print('Incomming conversation', self.request.data)
+        conversation_id = self.kwargs['conversation_id']
+        conversation =self.get_conversation(conversation_id)
+        serializer.save(sender=self.request.user, conversation=conversation)
+        
+    def get_conversation(self, conversation_id):
+        conversation = get_object_or_404(conversation, id=conversation_id)
+        if self.request.user not in conversation.participants.all():
+            raise PermissionDenied('you are not a participant of this conversation')
+        return conversation
