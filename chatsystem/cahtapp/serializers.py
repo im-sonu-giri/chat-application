@@ -15,3 +15,13 @@ class UserListSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'username')
+        
+class ConversationSerializer(serializers.ModelSerializer):
+    participants = UserListSerializer(many=True, read_only= True)
+    class Meta:
+        model = Conversation
+        fields = ('id', 'participants', 'created_at')
+        
+        def to_representation(self, instance):
+            representation = super().to_representation(instance)
+            return representation
