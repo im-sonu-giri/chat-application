@@ -25,3 +25,14 @@ class ConversationSerializer(serializers.ModelSerializer):
         def to_representation(self, instance):
             representation = super().to_representation(instance)
             return representation
+
+
+class MessageSerializer(serializers.ModelSerializer):
+    sender = UserListSerializer()
+    participants = serializers.SerializerMethodField()
+    class Meta:
+        model = Message
+        fields = ('id', 'conversation', 'sender', 'content', 'timestamp', 'participants')
+        
+        def get_participants(self, obj):
+            return UserListSerializer(obj.conversation.participants.all(), many=True).data
