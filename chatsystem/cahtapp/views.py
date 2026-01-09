@@ -121,3 +121,4 @@ class MessageListCreateView(generics.ListCreateAPIView):
         if self.request.user not in conversation.participants.all():
             raise PermissionDenied('you are not a participant of this conversation')
         return conversation
+    
