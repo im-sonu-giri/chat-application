@@ -122,3 +122,17 @@ class MessageListCreateView(generics.ListCreateAPIView):
             raise PermissionDenied('you are not a participant of this conversation')
         return conversation
     
+class MessageRetrieveDestroyView(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = MessageSerializer
+    
+    def get_queryset(self):
+        conversation_id= self.kwargs['conversation_id']
+        return Message.objects.filter(conversation_id= conversation_id)
+    
+    def perform_destroy(self, instance):
+        if instance.sender!= self.request.user:
+            raise PermissionDenied('you are not the sender of this message')
+        instance.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+   
