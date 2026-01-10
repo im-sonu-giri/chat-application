@@ -69,4 +69,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 self.channel_layer
             )
             
-    
+    async def receive(self, text_data):
+        text_data_json = json.loads(text_data)
+        event_type = text_data_json.get('type')
+        
+        if event_type == 'chat_message':
+            message_content = text_data_json.get('message')
+            user_id = text_data_json.get('user')
+            try:
+                user = await self.get_user(user_id)
+                conversation = await self.get_conversation(self.conversation_id)
+                from .serializers import UserListSerializer
+                user_data = UserListSerializer(user).data
+                
+                #msg to group
+                
+                message = await self.save_message(conversation, user, message_content)
+                
