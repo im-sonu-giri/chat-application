@@ -85,4 +85,18 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 #msg to group
                 
                 message = await self.save_message(conversation, user, message_content)
+                await self.channel_layer.group_send(
+                    self.room_group_send,{
+                        
+                        'type': 'chat_message',
+                        'message': message.content,
+                        'user': user_data,
+                        'timestamp': message.timestamp.isoformat(),
+                        
+                    }
+                )
+                
+            except Exception as e:
+                print(f"error saving message :{e}")
+                
                 
