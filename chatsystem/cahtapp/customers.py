@@ -122,7 +122,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         else:
                             print(f"User is typing for themselves")
                     else:
-                        print(f"Invalid receiver Id: {type(receiver_id)"})
+                        print(f"Invalid receiver Id: {type(receiver_id)}")
                 else:
                     print("No receiver is provided")
             except ValueError as e:
@@ -130,3 +130,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
             except Exception as e:
                 print(f"Error getting user data: {e}")
                 
+             
+    async def chat_message(self, event):
+        message = event['message']
+        user = event['user']
+        timestamp =event['timestamp']
+        await self.send(text_data=json.dumps)({
+            'type': 'chat_message',
+            'message': message,
+            'user': user,
+            'timestamp': timestamp,
+        })
