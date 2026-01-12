@@ -175,4 +175,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
             print(F"conversation with id {conversation_id} does not exit")
             return None
         
-        
+    @sync_to_async
+    def save_message(self, conversation, user, content):
+        from .models import Message
+        return  Message.objects.create(
+            conversation=conversation,
+            sender=user,
+            content=content
+        ) 
