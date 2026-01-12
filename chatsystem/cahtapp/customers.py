@@ -109,15 +109,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         receiver_id = int(receiver_id)
                         
                         if receiver_id != self.scope['user'].id:
-                            print(f"{user_data['username']} is typing for receiver: {receiver_id}")
                             await self.channel_layer.group_send(
                                 self.room_group_name,
                                 {
                                     'type': 'typing',
                                     'user': user_data,
                                     'receiver': receiver_id,
-                                }
-                                }
+                                    'is_typing': True,
+                                 }
                             )
                         else:
                             print(f"User is typing for themselves")
