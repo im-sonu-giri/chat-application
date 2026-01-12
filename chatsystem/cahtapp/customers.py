@@ -141,3 +141,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
             'user': user,
             'timestamp': timestamp,
         })
+    async def typing(self, event):
+        user = event['user']
+        receiver = event.get('receiver')
+        is_typing = event.get('is_typing', False)
+        await self.send(text_data=json.dumps({
+            'type': 'typing',
+            'user': user,
+            'receiver': receiver,
+            'is_typing': is_typing,
+        }))
+        
