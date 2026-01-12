@@ -160,4 +160,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         from django.contrib.auth import get_user_model
         User = get_user_model()
         return User.objects.get(id=user_id)
+    @sync_to_async
+    def get_user_data(self, user):
+        from .serializers import UserListSerializer
+        return UserListSerializer(user).data
         
