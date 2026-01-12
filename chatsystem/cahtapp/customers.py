@@ -164,4 +164,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
     def get_user_data(self, user):
         from .serializers import UserListSerializer
         return UserListSerializer(user).data
+    
+    
+    @sync_to_async
+    def get_conversation(self, conversation_id):
+        from .models import Conversation
+        try:
+            return Conversation.objects.get(id= conversation_id)
+        except Conversation.DoesNotExist:
+            print(F"conversation with id {conversation_id} does not exit")
+            return None
+        
         
