@@ -152,3 +152,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
             'is_typing': is_typing,
         }))
         
+    async def online_status(self, event):
+        await self.send(text_data=json.dumps(event))
+        
+    @sync_to_async
+    def get_user(self, user_id):
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        return User.objects.get(id=user_id)
+        
