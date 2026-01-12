@@ -98,5 +98,35 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 
             except Exception as e:
                 print(f"error saving message :{e}")
+        
+        elif event_type == 'typing':
+            try:
+                user_data = await self.get_user_data(self.scope['user'])
+                receiver_id = text_data_json.get('receiver')
                 
+                if receiver_id is not None:
+                    if isinstance(receiver_id, (str, int, float)):
+                        receiver_id = int(receiver_id)
+                        
+                        if receiver_id != self.scope['user'].id:
+                            print(f"{user_data['username']} is typing for receiver: {receiver_id}")
+                            await self.channel_layer.group_send(
+                                self.room_group_name,
+                                {
+                                    'type': 'typing',
+                                    'user': user_data,
+                                    'receiver': receiver_id,
+                                }
+                                }
+                            )
+                        else:
+                            print(f"User is typing for themselves")
+                    else:
+                        print(f"Invalid receiver Id: {type(receiver_id)"})
+                else:
+                    print("No receiver is provided")
+            except ValueError as e:
+                print(f"Error parsing receiver Id: {e}")
+            except Exception as e:
+                print(f"Error getting user data: {e}")
                 
