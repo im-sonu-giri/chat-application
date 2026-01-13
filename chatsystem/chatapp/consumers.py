@@ -6,7 +6,6 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
 from urllib.parse import parse_qs
 
-
 class ChatConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):

@@ -9,8 +9,8 @@ urlpatterns = [
     path('auth/token/', TokenObtainPairView.as_view(), name= 'token_obtain_pair'),
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('conversations/', ConversationListCreateView.as_view(),name='conversations_list'),
-    path('conversations/<int:conversation_id>/messages/', MessageListCreateView.as_view(), naem='messages_list_create'),
-    path('conversations/<int:conversation_id>/messages/<int:pk>/', MessageRetrieveDestroyView.as_view(), naem='messages_detail_destroy'),
+    path('conversations/<int:conversation_id>/messages/', MessageListCreateView.as_view(), name='messages_list_create'),
+    path('conversations/<int:conversation_id>/messages/<int:pk>/', MessageRetrieveDestroyView.as_view(), name='messages_detail_destroy'),
 
     
 ]
