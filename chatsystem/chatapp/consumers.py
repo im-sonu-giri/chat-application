@@ -1,91 +1,94 @@
 from asgiref.sync import sync_to_async
-import json
-import jwt
+import json 
+import jwt 
 from channels.generic.websocket import AsyncWebsocketConsumer
-from django.contrib.auth import get_user_model
+
 from django.conf import settings
 from urllib.parse import parse_qs
 
 
-User = get_user_model()
-
-
 class ChatConsumer(AsyncWebsocketConsumer):
+
     async def connect(self):
-        # Parse JWT token from query params
-        query_string = self.scope['query_string'].decode('utf8')
+        query_string = self.scope['query_string'].decode('utf-8')
         params = parse_qs(query_string)
-        token = params.get('token', [None])[0]
+        token = params.get('token', [None])[0] # token retrieved
 
-        if not token:
-            await self.close(code=4002)  # Token not provided
+        if token:
+            try:
+                decoded_data = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+                self.user = await self.get_user(decoded_data['user_id']) #get the user from the token
+                self.scope['user'] = self.user
+            except jwt.ExpiredSignatureError:
+                await self.close(code=4000) #close the connection if token is expired
+                return
+            except jwt.InvalidTokenError:
+                await self.close(code=4001) #close the connection if token is invalid
+                return
+        else:
+            await self.close(code=4002) #close the connection if no token is provided
             return
 
-        try:
-            decode_data = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-            self.user = await self.get_user(decode_data['user_id'])
-            self.scope['user'] = self.user
-        except jwt.ExpiredSignatureError:
-            await self.close(code=4000)  # Token expired
-            return
-        except jwt.InvalidTokenError:
-            await self.close(code=4001)  # Invalid token
-            return
+        self.conversation_id = self.scope['url_route']['kwargs']['conversation_id']
+        self.room_group_name = f'chat_{self.conversation_id}'
 
-      
-        self.room_group_name = 'chat_global'
 
-        # Add to group
-        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+        # Add channel to the  group
+        await self.channel_layer.group_add(
+            self.room_group_name,
+            self.channel_name
+        )
+
+        # accept websocket connections
         await self.accept()
 
-        # Notify group that user is online
         user_data = await self.get_user_data(self.user)
         await self.channel_layer.group_send(
             self.room_group_name,
             {
                 'type': 'online_status',
-                'online_user': [user_data],
+                'online_users': [user_data],
                 'status': 'online',
             }
         )
 
     async def disconnect(self, close_code):
         if hasattr(self, 'room_group_name'):
-            # Notify group user went offline
-            user_data = await self.get_user_data(self.scope['user'])
+            # notify others about the disconnect
+            user_data = await self.get_user_data(self.scope["user"])
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
                     'type': 'online_status',
-                    'online_user': [user_data],
+                    'online_users': [user_data],
                     'status': 'offline',
                 }
             )
-            # Remove from group
-            await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+
+            # Remove channel from the group
+            await self.channel_layer.group_discard(
+                self.room_group_name,
+                self.channel_name
+            )
 
     async def receive(self, text_data):
-        data = json.loads(text_data)
-        event_type = data.get('type')
+        text_data_json = json.loads(text_data)
+        event_type = text_data_json.get('type')
 
         if event_type == 'chat_message':
-            message_content = data.get('message')
-            user_id = data.get('user')
-            conversation_id = data.get('conversation_id')  # Pass conversation_id from frontend
+            message_content = text_data_json.get('message')
+            user_id = text_data_json.get('user')
 
             try:
                 user = await self.get_user(user_id)
-                conversation = await self.get_conversation(conversation_id)
-                if conversation is None:
-                    return
-
+                
+                conversation = await self.get_conversation(self.conversation_id)
                 from .serializers import UserListSerializer
                 user_data = UserListSerializer(user).data
 
+                #say message to the group/database
                 message = await self.save_message(conversation, user, message_content)
-
-                # Send to group
+                #broadcast the message to the group
                 await self.channel_layer.group_send(
                     self.room_group_name,
                     {
@@ -97,49 +100,68 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 )
             except Exception as e:
                 print(f"Error saving message: {e}")
-
+        
         elif event_type == 'typing':
             try:
                 user_data = await self.get_user_data(self.scope['user'])
-                receiver_id = data.get('receiver')
+                receiver_id = text_data_json.get('receiver')
 
-                if receiver_id is not None and isinstance(receiver_id, (str, int, float)):
-                    receiver_id = int(receiver_id)
-                    if receiver_id != self.scope['user'].id:
-                        await self.channel_layer.group_send(
-                            self.room_group_name,
-                            {
-                                'type': 'typing',
-                                'user': user_data,
-                                'receiver': receiver_id,
-                                'is_typing': True,
-                            }
-                        )
+                if receiver_id is not None:
+                    if isinstance(receiver_id, (str, int, float)):
+                        receiver_id = int(receiver_id)
+
+                        if receiver_id != self.scope['user'].id:
+                            print(f"{user_data['username']} is typing for Receiver: {receiver_id}")
+                            await self.channel_layer.group_send(
+                                self.room_group_name,
+                                {
+                                    'type': 'typing',
+                                    'user': user_data,
+                                    'receiver': receiver_id,
+                                }
+                            )
+                        else:
+                            print(f"User is typing for themselves")
+                    else:
+                        print(f"Invalid receiver ID: {type(receiver_id)}")
+                else:
+                    print("No receiver ID provided")
+            except ValueError as e:
+                print(f"Error parsing receiver ID: {e}")
             except Exception as e:
-                print(f"Error handling typing event: {e}")
+                print(f"Error getting user data: {e}")
 
-    # ---------------- WebSocket event handlers ----------------
+    # helper functions
     async def chat_message(self, event):
+        message = event['message']
+        user = event['user']
+        timestamp = event['timestamp']
         await self.send(text_data=json.dumps({
             'type': 'chat_message',
-            'message': event['message'],
-            'user': event['user'],
-            'timestamp': event['timestamp'],
+            'message': message,
+            'user': user,
+            'timestamp': timestamp,
         }))
-
+    
     async def typing(self, event):
+        user = event['user']
+        receiver = event.get('receiver')
+        is_typing = event.get('is_typing', False)
         await self.send(text_data=json.dumps({
             'type': 'typing',
-            'user': event['user'],
-            'receiver': event.get('receiver'),
-            'is_typing': event.get('is_typing', False),
+            'user': user,
+            'receiver': receiver,
+            'is_typing': is_typing,
         }))
 
     async def online_status(self, event):
         await self.send(text_data=json.dumps(event))
-
+    
+    
     @sync_to_async
     def get_user(self, user_id):
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
         return User.objects.get(id=user_id)
 
     @sync_to_async
@@ -153,7 +175,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         try:
             return Conversation.objects.get(id=conversation_id)
         except Conversation.DoesNotExist:
-            print(f"Conversation with id {conversation_id} does not exist")
+            print(F"Conversation with id {conversation_id} does not exist")
             return None
 
     @sync_to_async
