@@ -21,4 +21,8 @@ dist-ssr
 *.ntvs*
 *.njsproj
 *.sln
+.cache/
+.eslintcache
+.next/
+.vite/
 *.sw?

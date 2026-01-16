@@ -6,7 +6,7 @@ This project focuses on **how modern messaging systems work internally**, includ
 
 ---
 
-## 📌 Project Overview
+## Project Overview
 
 Traditional HTTP-based applications rely on request–response cycles, which are inefficient for real-time communication.  
 This project solves that limitation by implementing **WebSocket-based bidirectional communication**, enabling instant message delivery without page refresh or polling.
@@ -15,7 +15,7 @@ The application is built using **ASGI architecture**, allowing Django to handle 
 
 ---
 
-## 🎯 Objectives of the Project
+##  Objectives of the Project
 
 - Understand **real-time communication concepts**
 - Implement **WebSocket connections** using Django Channels
@@ -95,6 +95,7 @@ python manage.py migrate
 
 ### Run the Server
 daphne -p 8000 chatsystem.asgi:application
+npm run dev
 
 
 
