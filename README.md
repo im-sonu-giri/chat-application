@@ -94,8 +94,9 @@ pip install -r requirements.txt
 python manage.py migrate
 
 ### Run the Server
-daphne -p 8000 chatsystem.asgi:application
-npm run dev
+- daphne -p 8000 chatsystem.asgi:application
+- npm run dev
+
 
 
 
