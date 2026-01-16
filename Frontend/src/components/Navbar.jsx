@@ -8,7 +8,7 @@ const Navbar = () => {
   const { isAuthenticated, logout } = useAuthentication();
   const handleLogout = () => {
     logout();
-    setMenuOpen(false); // Close menu after logout
+    setMenuOpen(false); 
   };
 
   const toggleSidebar = () => {
