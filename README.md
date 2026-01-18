@@ -1,5 +1,3 @@
-# Real-Time Chat Application (Django + WebSockets)
-
 A **real-time chat application** developed using **Django**, **Django Channels**, and **WebSockets**, designed to demonstrate asynchronous backend development, real-time communication, and scalable system architecture.
 
 This project focuses on **how modern messaging systems work internally**, including persistent connections, event-driven communication, and concurrent user handling.
