@@ -1,9 +1,11 @@
-A **real-time chat application** developed using **Django**, **Django Channels**, and **WebSockets**, designed to demonstrate asynchronous backend development, real-time communication, and scalable system architecture.
+# Real-Time Chat Application
 
-This project focuses on **how modern messaging systems work internally**, including persistent connections, event-driven communication, and concurrent user handling.
+## Introduction
+A **real-time chat application** developed using **Django**, **Django Channels**, and **WebSockets**, designed to demonstrate **asynchronous backend development**, **real-time communication**, and **scalable system architecture**.
+
+This project focuses on **how modern messaging systems work internally**, including **persistent connections**, **event-driven communication**, and **concurrent user handling**. It showcases how Django can extend beyond the traditional request–response cycle using an **ASGI-based architecture**.
 
 ---
-
 ## Project Overview
 
 Traditional HTTP-based applications rely on request–response cycles, which are inefficient for real-time communication.  
